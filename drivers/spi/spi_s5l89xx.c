@@ -481,7 +481,7 @@ static void s5l89xx_spi_initialsetup(struct s5l89xx_spi *hw)
 	}
 }
 
-static int __init s5l89xx_spi_probe(struct platform_device *pdev)
+static int __devinit s5l89xx_spi_probe(struct platform_device *pdev)
 {
 	struct s5l_spi_info *pdata;
 	struct s5l89xx_spi *hw;
