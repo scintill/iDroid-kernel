@@ -85,7 +85,9 @@ static void __init ipad1g_init(void)
 {
 	s5l8930_init();
 
+#ifdef CONFIG_KEYBOARD_GPIO
 	s5l8930_register_gpio_keys(buttons, ARRAY_SIZE(buttons));
+#endif
 	s5l8930_register_mipi_dsim(&video_mode, 0, 0, 0, 4);
 	s5l8930_register_clcd(&video_mode, 24, &clcd_info);
 }
