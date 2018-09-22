@@ -14,6 +14,7 @@
 #include <linux/serial_core.h>
 #include <linux/platform_device.h>
 #include <linux/dma-mapping.h>
+#include <linux/memblock.h>
 
 #include <mach/cpu.h>
 #include <mach/map.h>
@@ -21,7 +22,7 @@
 #include <plat/irq.h>
 #include <asm/page.h>
 
-#include <asm/mach/arch.h>
+#include <asm/setup.h>
 #include <plat/cpu.h>
 #include <plat/clock.h>
 #include <plat/devs.h>
@@ -187,6 +188,19 @@ static struct platform_device cdma_dev = {
 extern struct platform_device s5l8930_spi0;
 extern struct platform_device s5l8930_spi1;
 
+#ifdef CONFIG_ANDROID_RAM_CONSOLE
+static struct resource ram_console_ram_rsrc __initdata = {
+	.flags = IORESOURCE_MEM,
+};
+
+static struct platform_device ram_console_device __initdata = {
+	.name = "ram_console",
+	.id = 0,
+	.resource = &ram_console_ram_rsrc,
+	.num_resources = 1,
+};
+#endif
+
 static struct platform_device *s5l8930_devices[] __initdata = {
 	//&s5l8930_spi0,
 	//&s5l8930_spi1,
@@ -196,11 +210,25 @@ static struct platform_device *s5l8930_devices[] __initdata = {
 	//&s3c_device_hsmmc0,
 };
 
+extern struct meminfo meminfo;
+
 static __init int s5l8930_cpu_init(void)
 {
 	s3c_sdhci0_set_platdata(&sdio0_pdata);
 	s3c_i2c0_set_platdata(NULL);
 	s3c_i2c1_set_platdata(NULL);
+
+#ifdef CONFIG_ANDROID_RAM_CONSOLE
+#define S5L8930_RAM_CONSOLE_SZ	SZ_128K
+	ram_console_ram_rsrc.start = meminfo.bank[0].start + meminfo.bank[0].size - S5L8930_RAM_CONSOLE_SZ;
+	ram_console_ram_rsrc.end   = ram_console_ram_rsrc.start + S5L8930_RAM_CONSOLE_SZ - 1;
+	if (!memblock_remove(ram_console_ram_rsrc.start, S5L8930_RAM_CONSOLE_SZ)) {
+		platform_device_register(&ram_console_device);
+	} else {
+		printk(KERN_ERR "s5l8930 was not able to reserve RAM console space; disabling");
+	}
+#endif
+
 	platform_add_devices(s5l8930_devices, ARRAY_SIZE(s5l8930_devices));
 	return 0;
 }
