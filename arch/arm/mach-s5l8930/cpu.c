@@ -206,7 +206,9 @@ static struct platform_device *s5l8930_devices[] __initdata = {
 	//&s5l8930_spi1,
 	//&s3c_device_i2c0,
 	//&s3c_device_i2c1,
-	//&s3c_device_usb_hsotg,
+#ifdef CONFIG_USB_GADGET_S3C_HSOTG
+	&s3c_device_usb_hsotg,
+#endif
 	//&s3c_device_hsmmc0,
 };
 

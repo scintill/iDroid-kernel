@@ -70,7 +70,7 @@
 #define gadget_is_s3c2410(g)    0
 #endif
 
-#if CONFIG_USB_GADGET_S3C_OTGD
+#ifdef CONFIG_USB_GADGET_S3C_OTGD
 #define gadget_is_s3c(g)    !strcmp("s3c-udc", (g)->name)
 #else
 #define gadget_is_s3c(g)    0

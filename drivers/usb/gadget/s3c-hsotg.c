@@ -314,18 +314,14 @@ static void s3c_hsotg_init_fifo(struct s3c_hsotg *hsotg)
 	int timeout;
 	u32 val;
 
-	/* the ryu 2.6.24 release ahs
-	   writel(0x1C0, hsotg->regs + S3C_GRXFSIZ);
-	   writel(S3C_GNPTXFSIZ_NPTxFStAddr(0x200) |
-		S3C_GNPTXFSIZ_NPTxFDep(0x1C0),
-		hsotg->regs + S3C_GNPTXFSIZ);
-	*/
+	/* set FIFO sizes - from openiboot - A4-specific */
+	const int rxFifoDepth = 0x11b;
+	const int txFifoDepth = 0x100;
+	const int txFifoAddr  = rxFifoDepth;
 
-	/* set FIFO sizes to 2048/1024 */
-
-	writel(2048, hsotg->regs + S3C_GRXFSIZ);
-	writel(S3C_GNPTXFSIZ_NPTxFStAddr(2048) |
-	       S3C_GNPTXFSIZ_NPTxFDep(1024),
+	writel(rxFifoDepth, hsotg->regs + S3C_GRXFSIZ);
+	writel(S3C_GNPTXFSIZ_NPTxFStAddr(txFifoAddr) |
+	       S3C_GNPTXFSIZ_NPTxFDep(txFifoDepth),
 	       hsotg->regs + S3C_GNPTXFSIZ);
 
 	/* arange all the rest of the TX FIFOs, as some versions of this
@@ -334,8 +330,8 @@ static void s3c_hsotg_init_fifo(struct s3c_hsotg *hsotg)
 	 * known values. */
 
 	/* start at the end of the GNPTXFSIZ, rounded up */
-	addr = 2048 + 1024;
-	size = 768;
+	addr = txFifoAddr + txFifoDepth;
+	size = 0x100; // PERIODIC_TX_FIFO_DEPTH
 
 	/* currently we allocate TX FIFOs for all possible endpoints,
 	 * and assume that they are all the same size. */
@@ -2865,6 +2861,9 @@ static void s3c_hsotg_otgreset(struct s3c_hsotg *hsotg)
 	writel(pwr, S3C_PHYPWR);
 	mdelay(1);
 
+	writel(0x6, S3C_PHYPWR + 0x1C);      /* UNK1 in openiboot */
+	writel(0x733, S3C_PHYPWR + 0x44);    /* GHWCFG1, unknown value from openiboot */
+
 	osc = hsotg->plat->is_osc ? S3C_PHYCLK_EXT_OSC : 0;
 
 	xusbxti = clk_get(hsotg->dev, "xusbxti");
@@ -2909,6 +2908,9 @@ static void s3c_hsotg_init(struct s3c_hsotg *hsotg)
 	       hsotg->regs + S3C_DOEPMSK);
 
 	writel(0, hsotg->regs + S3C_DAINTMSK);
+
+	writel(readl(hsotg->regs + 0xE00) & ~1, hsotg->regs + 0xE00); /* PCGCTL.STOPPCLK = 0 */
+	udelay(100);
 
 	/* Be in disconnected state until gadget is registered */
 	__orr32(hsotg->regs + S3C_DCTL, S3C_DCTL_SftDiscon);
