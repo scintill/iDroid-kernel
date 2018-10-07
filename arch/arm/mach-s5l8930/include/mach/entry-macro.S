@@ -34,13 +34,13 @@
 	teqeq	\irqstat, #0
 
 	@ otherwise try vic2
-	addeq	\tmp, \base, #(VA_VIC2 - VA_VIC1)
+	addeq	\tmp, \base, #(VA_VIC2 - VA_VIC0)
 	addeq	\irqnr, \irqnr, #32
 	ldreq	\irqstat, [ \tmp, # VIC_IRQ_STATUS ]
 	teqeq	\irqstat, #0
 
 	@ otherwise try vic3
-	addeq	\tmp, \base, #(VA_VIC3 - VA_VIC2)
+	addeq	\tmp, \base, #(VA_VIC3 - VA_VIC0)
 	addeq	\irqnr, \irqnr, #32
 	ldreq	\irqstat, [ \tmp, # VIC_IRQ_STATUS ]
 	teqeq	\irqstat, #0

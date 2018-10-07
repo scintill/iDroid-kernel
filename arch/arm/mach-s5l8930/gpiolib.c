@@ -102,9 +102,10 @@ static void s5l8930_gpioic_unmask(struct irq_data *_data)
 {
 	u32 block = EINT_OFFSET(_data->irq);
 	u32 pin = IRQ_EINT_BIT(_data->irq);
+	u32 gpio = IRQ_TO_GPIO(_data->irq);
 
 	spin_lock(&gpio_lock);
-	if((s5l8930_gpio_cache[_data->irq] & 0xc) == 4) // autoflip
+	if((s5l8930_gpio_cache[gpio] & 0xc) == 4) // autoflip
 		__raw_writel(1 << pin, VA_GPIO + S5L_GPIO_INTSTS(block));
 	spin_unlock(&gpio_lock);
 
@@ -132,23 +133,33 @@ static int s5l8930_gpioic_set_type(struct irq_data *_data, unsigned int _type)
 {
 	u8 mode;
 	u16 value;
+	u32 gpio = IRQ_TO_GPIO(_data->irq);
+
 	switch(_type)
 	{
 	case IRQ_TYPE_EDGE_BOTH:
+		irq_set_handler(_data->irq, handle_edge_irq);
+		mode = 0xc;
+		break;
+
 	case IRQ_TYPE_EDGE_RISING:
-		mode = 0x4;
-		break;
-
-	case IRQ_TYPE_EDGE_FALLING:
-		mode = 0x6;
-		break;
-
-	case IRQ_TYPE_LEVEL_LOW:
+		irq_set_handler(_data->irq, handle_edge_irq);
 		mode = 0x8;
 		break;
 
-	case IRQ_TYPE_LEVEL_HIGH:
+	case IRQ_TYPE_EDGE_FALLING:
+		irq_set_handler(_data->irq, handle_edge_irq);
 		mode = 0xa;
+		break;
+
+	case IRQ_TYPE_LEVEL_LOW:
+		irq_set_handler(_data->irq, handle_level_irq);
+		mode = 0x6;
+		break;
+
+	case IRQ_TYPE_LEVEL_HIGH:
+		irq_set_handler(_data->irq, handle_level_irq);
+		mode = 0x4;
 		break;
 
 	default:
@@ -156,11 +167,11 @@ static int s5l8930_gpioic_set_type(struct irq_data *_data, unsigned int _type)
 	}
 
 	spin_lock(&gpio_lock);
-	value = s5l8930_gpio_cache[_data->irq];
+	value = s5l8930_gpio_cache[gpio];
 	value &=~ 0xE;
 	value |= 0x200 | mode;
-	s5l8930_gpio_cache[_data->irq] = value;
-	__raw_writel(value, VA_GPIO + S5L_GPIO_PIN(_data->irq));
+	s5l8930_gpio_cache[gpio] = value;
+	__raw_writel(value, VA_GPIO + S5L_GPIO_PIN(gpio));
 	spin_unlock(&gpio_lock);
 
 	return 0;
@@ -181,7 +192,7 @@ static void s5l8930_gpioic_demux(unsigned int irq, struct irq_desc *desc)
 		if(sts)
 		{
 			pin = fls(sts)-1;
-			gpio = (block*8) + pin;
+			gpio = (block*32) + pin;
 
 			spin_lock(&gpio_lock);
 			if((s5l8930_gpio_cache[gpio] & 0xC) == 4)

@@ -49,13 +49,15 @@
 #define IRQ_SPI0 0x1D
 #define IRQ_SPI1 0x1E
 
-#define S5L_SUBIRQ_START	(32*4) + 176
+#define S5L_NR_VIC_IRQS		(32*4)
+#define S5L_SUBIRQ_START	S5L_NR_VIC_IRQS + 176/*ARCH_NR_GPIOS*/
 #define S5L_SUBIRQ(x)		(S5L_SUBIRQ_START + (x))
 
 #define NR_IRQS				S5L_SUBIRQ_START + 100 // 100 'spare' IRQs for software demuxing
 
-#define IRQ_EINT(x)			((32*4) + (x))
-#define EINT_OFFSET(irq)	((irq)/32)
-#define IRQ_EINT_BIT(x)		((x)&0x1f)
+#define IRQ_EINT(x)			(S5L_NR_VIC_IRQS + (x))
+#define EINT_OFFSET(irq)	((irq-S5L_NR_VIC_IRQS)/32)
+#define IRQ_EINT_BIT(x)		((x-S5L_NR_VIC_IRQS)&0x1f)
+#define IRQ_TO_GPIO(x)		(x - S5L_NR_VIC_IRQS)
 
 #endif //_S5L8930_IRQS_

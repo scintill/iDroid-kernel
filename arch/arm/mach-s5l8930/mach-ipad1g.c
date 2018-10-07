@@ -55,28 +55,32 @@ static struct fb_videomode video_mode = {
 };
 
 static struct gpio_keys_button buttons[] = {
-	[0] = {
+	{
 		.type = EV_KEY,
 		.code = KEY_ENTER,
 		.gpio = S5L8930_GPIO(0x0),
+		.active_low = 1,
 		.desc = "Home",
 	},
-	[1] = {
+	{
 		.type = EV_KEY,
 		.code = KEY_ESC,
 		.gpio = S5L8930_GPIO(0x1),
+		.active_low = 1,
 		.desc = "Hold",
 	},
-	[2] = {
+	{
 		.type = EV_KEY,
 		.code = KEY_VOLUMEUP,
 		.gpio = S5L8930_GPIO(0x2),
+		.active_low = 1,
 		.desc = "Volume Up",
 	},
-	[3] = {
+	{
 		.type = EV_KEY,
 		.code = KEY_VOLUMEDOWN,
 		.gpio = S5L8930_GPIO(0x3),
+		.active_low = 1,
 		.desc = "Volume Down",
 	},
 };
